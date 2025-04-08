@@ -22,8 +22,8 @@
                     <div class="card-header">{{ __('Register') }}</div>
                     <div class="card-body">
                         <!-- Start the login form -->
-                        <form method="POST" action="{{route('register.post')}}">
-                            @csrf
+                        <form method="POST" action="{{route('registerpost')}}">
+                         @csrf
 <br>
                            <!-- Name -->
                            <div class="form-group row">

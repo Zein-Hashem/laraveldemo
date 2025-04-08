@@ -3,39 +3,51 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use Hash;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use App\Services\UserService;
-use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
-{
+{    
+    protected $jwtAuth;
+    
+    public function __construct(UserService $jwtAuth)
+    {
+        $this->jwtAuth = $jwtAuth;
+    }
     public function login()
     {
         return view("auth.login");
     }
     public function loginPost(Request $request)
     {
-        $request->validate([
-            'email' => 'required',
+        $credentials = $request->validate([
+            'email' => 'required|email',
             'password' => 'required',
         ]);
-
-        $credentials = $request->only('email', 'password');
-        $userService = app(UserService::class);
-        $token = $userService->login($credentials);
-
-        if (!$token) {
-            return redirect(route('login'))->with("error", "Invalid credentials");
+        
+        $user = User::where('email', $credentials['email'])->first();
+        
+        if (!$user || !Hash::check($credentials['password'], $user->password)) {
+            return response()->json([
+                'error' => 'The provided credentials are incorrect.'
+            ], 401);
         }
-
-        return response()->json(['token' => $token]);
+        
+        $token = $this->jwtAuth->generateToken($user);
+        
+        return response()->json([
+            'token' => $token,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+            ]
+        ]);
     }
-
-    public function getUser(Request $request)
+    public function me(Request $request)
     {
-        $user = JWTAuth::user();
-        return response()->json($user);
+        return response()->json($request->user());
     }
 
     public function register()
