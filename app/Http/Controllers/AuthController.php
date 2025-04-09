@@ -6,6 +6,10 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use App\Services\UserService;
+use App\DTO\LoginDTO;
+use App\DTO\RegisterDTO;
+use App\Http\Requests\LoginRequest;
+use App\Http\Requests\RegisterRequest;
 
 class AuthController extends Controller
 {    
@@ -19,19 +23,13 @@ class AuthController extends Controller
     {
         return view("auth.login");
     }
-    public function loginPost(Request $request)
+    public function loginPost(LoginRequest $request, UserService $userService)
     {
-        $credentials = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
+        $loginDto = LoginDTO::fromRequest($request);
+        $user = $userService->login($loginDto);
         
-        $user = User::where('email', $credentials['email'])->first();
-        
-        if (!$user || !Hash::check($credentials['password'], $user->password)) {
-            return response()->json([
-                'error' => 'The provided credentials are incorrect.'
-            ], 401);
+        if (!$user) {
+            return redirect(route('login'))->with('error', 'Invalid credentials');
         }
         
         $token = $this->jwtAuth->generateToken($user);
@@ -55,19 +53,12 @@ class AuthController extends Controller
         return view("auth.register");
     }
 
-    public function registerPost(Request $request)
+    public function registerPost(RegisterRequest $request, UserService $userService)
     {
-        $request->validate([
-            'name'=>'required',
-            'email'=>'required',
-            'password'=>'required',
-        ]);
-        $user = new User();
-        $user->name=$request->name;
-        $user->email=$request->email;
-        $user->password=Hash::make($request->password);
-        if($user->save()){
-            return redirect(route('login'))->with("succes","user created successfully");
+        $registerDto = RegisterDTO::fromRequest($request);
+        $user=$userService->register($registerDto);
+        if($user && $user->save()){
+            return redirect(route('login'))->with("success","user created successfully");
         }
         return redirect(route('register'))->with('error','failed to create user');
     }

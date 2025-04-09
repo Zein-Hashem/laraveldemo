@@ -17,6 +17,11 @@
                 </div>
                 
                 @endif
+
+                @error('name')
+        <div class="text-danger">{{$message}}</div>
+@enderror
+
                 <div class="card">
                     <br>
                     <div class="card-header">{{ __('Register') }}</div>

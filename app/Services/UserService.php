@@ -5,15 +5,36 @@ namespace App\Services;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use App\Models\User;
+use App\DTO\LoginDTO;
+use App\DTO\RegisterDTO;
+use Illuminate\Support\Facades\Hash;
 
 class UserService
 {
-    public function login(array $credentials)
+    public function register(RegisterDto $registerDto)
     {
-        if (!$token = JWTAuth::attempt($credentials)) {
-            return false;
-        }
-        return $token;
+        $user = new User();
+        $user->name=$registerDto->name;
+        $user->email=$registerDto->email;
+        $user->password=Hash::make($registerDto->password);
+        $user->save();
+        return $user;
+    }
+
+    public function login(LoginDTO $logindto)
+    {
+        $credentials = [
+            'email' => $logindto->email,
+            'password' => $logindto->password
+        ];       
+        $user = User::where('email', $credentials['email'])->first();
+        
+        if (!$user || !Hash::check($credentials['password'], $user->password)) {
+            return response()->json([
+                'error' => 'The provided credentials are incorrect.'
+            ], 401);
+        } 
+        return $user;
     }
 
     private $key;
