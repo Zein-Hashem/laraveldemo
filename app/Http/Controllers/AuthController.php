@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
+use App\Exceptions\Handler;
+use App\Exceptions\InvalidOrderException;
 use App\Services\UserService;
 use App\DTO\LoginDTO;
 use App\DTO\RegisterDTO;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {    
@@ -25,23 +28,41 @@ class AuthController extends Controller
     }
     public function loginPost(LoginRequest $request, UserService $userService)
     {
-        $loginDto = LoginDTO::fromRequest($request);
-        $user = $userService->login($loginDto);
-        
-        if (!$user) {
-            return redirect(route('login'))->with('error', 'Invalid credentials');
+        try {
+            $loginDto = LoginDTO::fromRequest($request);
+            $user = $userService->login($loginDto);
+
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid credentials.',
+                ], 401);
+            }
+
+            $token = $this->jwtAuth->generateToken($user);
+
+            return response()->json([
+                'token' => $token,
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                ],
+            ], 200);
+        } catch (ValidationException $e) {
+            // Handle validation errors
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed.',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            // Handle unexpected errors
+            return response()->json([
+                'success' => false,
+                'message' => 'An unexpected error occurred.',
+            ], 500);
         }
-        
-        $token = $this->jwtAuth->generateToken($user);
-        
-        return response()->json([
-            'token' => $token,
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-            ]
-        ]);
     }
     public function me(Request $request)
     {
@@ -55,12 +76,28 @@ class AuthController extends Controller
 
     public function registerPost(RegisterRequest $request, UserService $userService)
     {
-        $registerDto = RegisterDTO::fromRequest($request);
-        $user=$userService->register($registerDto);
-        if($user && $user->save()){
-            return redirect(route('login'))->with("success","user created successfully");
-        }
-        return redirect(route('register'))->with('error','failed to create user');
-    }
+        try {
+            $registerDto = RegisterDTO::fromRequest($request);
+            $user = $userService->register($registerDto);
 
+            if (!$user || !$user->save()) {
+                return response()->json(['error' => 'User not validated'], 404);
+            }
+
+            return response()->json([
+                'message' => 'User registered successfully',
+            ], 201);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed.',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An unexpected error occurred.',
+            ], 500);
+        }
+    }
 }

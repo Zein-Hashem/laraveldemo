@@ -19,14 +19,4 @@ class RegisterDTO
             password: $request->input('password')
         );
     }
-
-    // Optional: Accept validated array
-    public static function fromArray(array $data): self
-    {
-        return new self(
-            name: $data['name'],
-            email: $data['email'],
-            password: $data['password']
-        );
-    }
 }

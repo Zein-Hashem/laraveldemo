@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Contracts\Validation\Validator;
 
 class LoginRequest extends FormRequest
 {
@@ -21,8 +22,6 @@ class LoginRequest extends FormRequest
     public function messages()
     {
         return [
-            'name.required' => 'The name field is required.',
-            'name.regex' => 'The name should not contain numbers or special characters.',
             'email.required' => 'The email field is required.',
             'email.email' => 'Please enter a valid email address.',
             'email.unique' => 'This email is already taken.',
@@ -31,4 +30,13 @@ class LoginRequest extends FormRequest
             'password.confirmed' => 'The password confirmation does not match.',
         ];
     }
-}
+
+    protected function failedValidation(Validator $validator)
+    {
+        throw new HttpResponseException(response()->json([
+        'success' => false,
+        'message' => 'Validation failed.',
+        'errors' => $validator->errors(),
+        ], 422));
+    }
+    }

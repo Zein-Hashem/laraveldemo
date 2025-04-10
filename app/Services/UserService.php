@@ -8,19 +8,20 @@ use App\Models\User;
 use App\DTO\LoginDTO;
 use App\DTO\RegisterDTO;
 use Illuminate\Support\Facades\Hash;
+use App\Exceptions\InvalidOrderException;
 
 class UserService
 {
     public function register(RegisterDto $registerDto)
     {
-        $user = new User();
-        $user->name=$registerDto->name;
-        $user->email=$registerDto->email;
-        $user->password=Hash::make($registerDto->password);
-        $user->save();
-        return $user;
+       
+            $user = new User();
+            $user->name = $registerDto->name;
+            $user->email = $registerDto->email;
+            $user->password = Hash::make($registerDto->password);
+            $user->save();
+            return $user;   
     }
-
     public function login(LoginDTO $logindto)
     {
         $credentials = [
