@@ -28,7 +28,7 @@ class AuthController extends Controller
     }
     public function loginPost(LoginRequest $request, UserService $userService)
     {
-        try {
+
             $loginDto = LoginDTO::fromRequest($request);
             $user = $userService->login($loginDto);
 
@@ -49,20 +49,6 @@ class AuthController extends Controller
                     'email' => $user->email,
                 ],
             ], 200);
-        } catch (ValidationException $e) {
-            // Handle validation errors
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed.',
-                'errors' => $e->errors(),
-            ], 422);
-        } catch (\Exception $e) {
-            // Handle unexpected errors
-            return response()->json([
-                'success' => false,
-                'message' => 'An unexpected error occurred.',
-            ], 500);
-        }
     }
     public function me(Request $request)
     {
@@ -76,7 +62,7 @@ class AuthController extends Controller
 
     public function registerPost(RegisterRequest $request, UserService $userService)
     {
-        try {
+        
             $registerDto = RegisterDTO::fromRequest($request);
             $user = $userService->register($registerDto);
 
@@ -87,17 +73,6 @@ class AuthController extends Controller
             return response()->json([
                 'message' => 'User registered successfully',
             ], 201);
-        } catch (ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed.',
-                'errors' => $e->errors(),
-            ], 422);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'An unexpected error occurred.',
-            ], 500);
-        }
+        
     }
 }
