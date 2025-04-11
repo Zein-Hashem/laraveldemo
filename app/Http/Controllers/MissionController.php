@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Services\MissionService;
 use App\Http\Requests\StoreMissionRequest;
 use App\Http\Requests\UpdateMissionRequest;
+use Illuminate\Http\JsonResponse;
 
 class MissionController extends Controller
 {   
@@ -27,5 +28,13 @@ class MissionController extends Controller
         $this->missionService->delete($mission);
         return response()->json(['message' => 'Mission deleted']);
     }
-    
+    public function index(Request $request): JsonResponse
+    {
+        $perPage = $request->input('per_page', 10);
+        $page = $request->input('page', 1);
+        
+        $missions = $this->missionService->getPaginatedMissions($perPage, $page);
+        
+        return response()->json($missions);
+    }
 }

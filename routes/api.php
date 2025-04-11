@@ -35,5 +35,6 @@ Route::prefix('missions')->group(function () {
     Route::post('/', [MissionController::class, 'store']);
     Route::patch('{mission}', [MissionController::class, 'update']);
     Route::delete('{mission}', [MissionController::class, 'destroy']);
+    Route::get('/', [MissionController::class, 'index']);
 });
 
