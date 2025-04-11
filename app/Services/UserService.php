@@ -8,7 +8,6 @@ use App\Models\User;
 use App\DTO\LoginDTO;
 use App\DTO\RegisterDTO;
 use Illuminate\Support\Facades\Hash;
-use App\Exceptions\InvalidOrderException;
 
 class UserService
 {
