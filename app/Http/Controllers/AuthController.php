@@ -3,39 +3,56 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use Hash;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
+use App\Exceptions\Handler;
+use App\Exceptions\InvalidOrderException;
 use App\Services\UserService;
-use Tymon\JWTAuth\Facades\JWTAuth;
+use App\DTO\LoginDTO;
+use App\DTO\RegisterDTO;
+use App\Http\Requests\LoginRequest;
+use App\Http\Requests\RegisterRequest;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
-{
+{    
+    protected $jwtAuth;
+    
+    public function __construct(UserService $jwtAuth)
+    {
+        $this->jwtAuth = $jwtAuth;
+    }
     public function login()
     {
         return view("auth.login");
     }
-    public function loginPost(Request $request)
+    public function loginPost(LoginRequest $request, UserService $userService)
     {
-        $request->validate([
-            'email' => 'required',
-            'password' => 'required',
-        ]);
 
-        $credentials = $request->only('email', 'password');
-        $userService = app(UserService::class);
-        $token = $userService->login($credentials);
+            $loginDto = LoginDTO::fromRequest($request);
+            $user = $userService->login($loginDto);
 
-        if (!$token) {
-            return redirect(route('login'))->with("error", "Invalid credentials");
-        }
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid credentials.',
+                ], 401);
+            }
 
-        return response()->json(['token' => $token]);
+            $token = $this->jwtAuth->generateToken($user);
+
+            return response()->json([
+                'token' => $token,
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                ],
+            ], 200);
     }
-
-    public function getUser(Request $request)
+    public function me(Request $request)
     {
-        $user = JWTAuth::user();
-        return response()->json($user);
+        return response()->json($request->user());
     }
 
     public function register()
@@ -43,21 +60,19 @@ class AuthController extends Controller
         return view("auth.register");
     }
 
-    public function registerPost(Request $request)
+    public function registerPost(RegisterRequest $request, UserService $userService)
     {
-        $request->validate([
-            'name'=>'required',
-            'email'=>'required',
-            'password'=>'required',
-        ]);
-        $user = new User();
-        $user->name=$request->name;
-        $user->email=$request->email;
-        $user->password=Hash::make($request->password);
-        if($user->save()){
-            return redirect(route('login'))->with("succes","user created successfully");
-        }
-        return redirect(route('register'))->with('error','failed to create user');
-    }
+        
+            $registerDto = RegisterDTO::fromRequest($request);
+            $user = $userService->register($registerDto);
 
+            if (!$user || !$user->save()) {
+                return response()->json(['error' => 'User not validated'], 404);
+            }
+
+            return response()->json([
+                'message' => 'User registered successfully',
+            ], 201);
+        
+    }
 }
