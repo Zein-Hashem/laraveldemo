@@ -6,7 +6,6 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use App\Exceptions\Handler;
-use App\Exceptions\InvalidOrderException;
 use App\Services\UserService;
 use App\DTO\LoginDTO;
 use App\DTO\RegisterDTO;
