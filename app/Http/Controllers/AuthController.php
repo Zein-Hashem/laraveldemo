@@ -12,6 +12,7 @@ use App\DTO\RegisterDTO;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use Illuminate\Validation\ValidationException;
+use App\Jobs\SendEmailJob;
 
 class AuthController extends Controller
 {    
@@ -68,7 +69,7 @@ class AuthController extends Controller
             if (!$user || !$user->save()) {
                 return response()->json(['error' => 'User not validated'], 404);
             }
-
+            SendEmailJob::dispatch($user);
             return response()->json([
                 'message' => 'User registered successfully',
             ], 201);

@@ -7,6 +7,8 @@ use App\Http\Controllers\StudentController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\MissionController;
+use App\Mail\WelcomeUserMail;
+use Illuminate\Support\Facades\Mail;
 
 
 Route::post("/loginpost",[App\Http\Controllers\AuthController::class,"loginPost"])
@@ -14,7 +16,6 @@ Route::post("/loginpost",[App\Http\Controllers\AuthController::class,"loginPost"
 Route::post("/registerpost",[App\Http\Controllers\AuthController::class,"registerPost"])
     ->name("registerpost");
 Route::middleware('jwt.auth')->group(function () {
- Route::get('/me', [App\Http\Controllers\AuthController::class, 'me']);
 });
 Route::get('/students', [StudentController::class, 'index']);
 Route::get('/students/teacher/{teacherId}', [StudentController::class, 'getByTeacher']);
@@ -37,4 +38,5 @@ Route::prefix('missions')->group(function () {
     Route::delete('{mission}', [MissionController::class, 'destroy']);
     Route::get('/', [MissionController::class, 'index']);
 });
+
 
